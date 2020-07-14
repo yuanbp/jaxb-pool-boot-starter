@@ -1,4 +1,4 @@
-package com.metinform.jaxb;
+package com.metinform.common.jaxb;
 
 import org.apache.commons.pool2.BaseKeyedPooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
@@ -7,18 +7,21 @@ import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
 
-public class MarshallerKeyPoolFactory {
+/**
+ * @author chieftain
+ * @date 2020/7/14 14:11
+ */
+public class JAXBContextKeyPoolFactory {
+
     /**
      * 对象池
      */
-    private static GenericKeyedObjectPool<String, Marshaller> pool;
+    private static GenericKeyedObjectPool<String, JAXBContext> pool;
     /**
      * 对象池的参数设置
      */
     private static final GenericKeyedObjectPoolConfig CONFIG;
-
     /**
      * 对象池每个key最大实例化对象数
      */
@@ -36,10 +39,10 @@ public class MarshallerKeyPoolFactory {
         CONFIG.setMaxIdlePerKey(idle);
         /** 支持jmx管理扩展 */
         CONFIG.setJmxEnabled(true);
-        CONFIG.setJmxNamePrefix("MarshallerPoolProtocol");
+        CONFIG.setJmxNamePrefix("JAXBContextPoolProtocol");
         /** 保证获取有效的池对象 */
-        CONFIG.setTestOnBorrow(true);
-        CONFIG.setTestOnReturn(true);
+        CONFIG.setTestOnBorrow(false);
+        CONFIG.setTestOnReturn(false);
     }
 
     /**
@@ -49,7 +52,7 @@ public class MarshallerKeyPoolFactory {
      * @return
      * @throws Exception
      */
-    public static Marshaller borrowBean(String key) throws Exception {
+    public static JAXBContext borrowBean(String key) throws Exception {
         if (pool == null) {
             init();
         }
@@ -62,7 +65,7 @@ public class MarshallerKeyPoolFactory {
      * @param key
      * @param bean
      */
-    public static void returnBean(String key, Marshaller bean) {
+    public static void returnBean(String key, JAXBContext bean) {
         if (pool == null) {
             init();
         }
@@ -86,13 +89,13 @@ public class MarshallerKeyPoolFactory {
         if (pool != null) {
             return;
         }
-        pool = new GenericKeyedObjectPool<String, Marshaller>(new MarshallerPooledFactory(), CONFIG);
+        pool = new GenericKeyedObjectPool<>(new JAXBContextPooledFactory(), CONFIG);
     }
 
     /**
      * 对象工厂
      */
-    static class MarshallerPooledFactory extends BaseKeyedPooledObjectFactory<String, Marshaller> {
+    static class JAXBContextPooledFactory extends BaseKeyedPooledObjectFactory<String, JAXBContext> {
         /**
          * 创建对象
          *
@@ -101,19 +104,18 @@ public class MarshallerKeyPoolFactory {
          * @throws Exception
          */
         @Override
-        public Marshaller create(String key) throws Exception {
+        public JAXBContext create(String key) throws Exception {
             Class clazz = Class.forName(key);
-            JAXBContext context = JAXBContext.newInstance(clazz);
-            return context.createMarshaller();
+            return JAXBContext.newInstance(clazz);
         }
 
         @Override
-        public PooledObject<Marshaller> makeObject(String key) throws Exception {
+        public PooledObject<JAXBContext> makeObject(String key) throws Exception {
             return super.makeObject(key);
         }
 
         @Override
-        public PooledObject<Marshaller> wrap(Marshaller value) {
+        public PooledObject<JAXBContext> wrap(JAXBContext value) {
             return new DefaultPooledObject<>(value);
         }
 
@@ -125,7 +127,7 @@ public class MarshallerKeyPoolFactory {
          * @return
          */
         @Override
-        public boolean validateObject(String key, PooledObject<Marshaller> p) {
+        public boolean validateObject(String key, PooledObject<JAXBContext> p) {
             if (null == p.getObject()) {
                 return false;
             }
@@ -140,18 +142,18 @@ public class MarshallerKeyPoolFactory {
          * @throws Exception
          */
         @Override
-        public void destroyObject(String key, PooledObject<Marshaller> p) throws Exception {
+        public void destroyObject(String key, PooledObject<JAXBContext> p) throws Exception {
             /** 杀死他 */
             super.destroyObject(key, p);
         }
 
         @Override
-        public void activateObject(String key, PooledObject<Marshaller> p) throws Exception {
+        public void activateObject(String key, PooledObject<JAXBContext> p) throws Exception {
             super.activateObject(key, p);
         }
 
         @Override
-        public void passivateObject(String key, PooledObject<Marshaller> p) throws Exception {
+        public void passivateObject(String key, PooledObject<JAXBContext> p) throws Exception {
             super.passivateObject(key, p);
         }
     }
